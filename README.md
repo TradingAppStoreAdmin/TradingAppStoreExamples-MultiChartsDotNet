@@ -49,16 +49,85 @@ The TradingAppStore DLL also offers a hardware authorization option that only al
 You may download the installer for TradingAppStore from the vendor portal whenever you are in the process of creating a listing. All licenses created from the vendor portal are tagged with a “Debug” flag, so they will not have any functionality in release mode. Thus, BE SURE TO CHANGE THE DEBUG FLAG TO FALSE AFTER COMPLETION OF TESTING PHASES.
 
 ## Implementation
-Right-click on your project in your IDE and click "Add Reference". Then, add the dll located at C:\ProgramData\TradingAppStore\x64\TAS_DotNet.dll as a reference.
+Right-click on your project in your IDE and click "Add Reference". Then, add the dll located at C:\ProgramData\TradingAppStore\x64\TAS_DotNet.dll and C:\ProgramData\TradingAppStore\x64\Utils_DotNet.dll as references.
 To access the DLL function, the following lines can be inserted into your software source files:
 ```C#
-using Permissions = UserPermission; //make sure to use this syntax
-//…
-Console.WriteLine("Starting...");
-Permissions p = new Permissions();
-bool debug =  true;
-int error = p.GetPlatformAuthorization("MultiChartsDotNet-" + "ACCOUNT-NAME" , "MY-PRODUCT-SKU", debug);
-Console.WriteLine(error);
+using Permissions = UserPermission;
+using Utilities = Utils;
+using System.Text;
+using System.Net;
+using System.IO;
+
+Output.Write("Starting...");
+//Before you use the dlls, you should first make sure that they have not been tampered with.
+if (!VerifyDlls())
+{
+    return; // VERY IMPORTANT: Handle the case for if either verification fails. Do not use the library code! In this example, we simply return to terminate the program.
+}
+
+//After verifying the DLLs, you can safely use them to authorize your customers.
+UserPermission p = new UserPermission();
+string productID = "INSERT_PRODUCT_SKU";
+string customerID = "MultiChartsDotNet-" + "GET_CUSTOMER_USERNAME";
+bool debug = true; // VERY IMPORTANT: Only set this to true during testing. Actual implementation will have debug set to false.
+
+//Perform user authentication using TAS authorization
+int error_platform_auth = p.GetPlatformAuthorization(customerID, productID, debug);
+Output.Write("Returned Error: " + error_platform_auth);
+
+private string SendRequest(string url, string jsonString)
+{
+      WebRequest request = WebRequest.Create(url);
+      request.Method = "POST";
+      request.ContentType = "application/json";
+
+      byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonString);
+
+      using (Stream requestStream = request.GetRequestStream())
+      {
+          requestStream.Write(jsonBytes, 0, jsonBytes.Length);
+      }
+
+      // Get the response from the server
+      string resString = "";
+      using (WebResponse response = request.GetResponse())
+      {
+          // Get the response stream
+          using (Stream dataStream = response.GetResponseStream())
+          {
+              // Read the stream and print the response
+              StreamReader reader = new StreamReader(dataStream);
+              resString = reader.ReadToEnd();
+              
+          }
+      }
+      return resString;
+}
+private bool VerifyDlls()
+{
+    Utils utils = new Utils();
+
+    //This gets a one-time-use magic number from a utility dll
+    string magicNumber = utils.ReceiveMagicNumber();
+   
+    var jsonString = "{\"magic_number\" : \"" + magicNumber + "\"}";
+
+     //Now, let's send that magic number to our server to be verified
+     var response = SendRequest("https://tradingstoreapi.ngrok.app/verifyDLL", jsonString);
+  
+  if (response == "ACCEPT")
+  {
+      Output.Write("DLL accepted");
+      return true;
+  }
+  else
+  {
+      Output.Write("DLL has been tampered with. Response:\n");
+      Output.Write(response);
+      return false;
+  }
+
+}
 ```
 
 ## DLL Inputs
