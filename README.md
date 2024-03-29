@@ -29,7 +29,7 @@ If you would like email notifications upon purchases, place the receiving addres
 ### Target Platform:
 Choose MultiChartsDotNet
 
-### MultiCharts.Net Username
+### Platform Customer Data
 Enter your MultiCharts.NET Username. This value will be embedded into the license so that you can check it at runtime whenever you access our DLL.
 
 ### SKU:
