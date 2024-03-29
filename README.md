@@ -29,8 +29,8 @@ If you would like email notifications upon purchases, place the receiving addres
 ### Target Platform:
 Choose MultiChartsDotNet
 
-### NinjaTrader Username
-Enter your MultiCharts .NET Username. This value will be embedded into the license so that you can check it at runtime whenever you access our DLL.
+### MultiCharts.Net Username
+Enter your MultiCharts.NET Username. This value will be embedded into the license so that you can check it at runtime whenever you access our DLL.
 
 ### SKU:
 Unique self-created product identifier that you will use in your script while accessing the DLL.
